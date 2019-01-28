@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		74111FD621FEEA2B00FB1A6C /* HDPeriodCircleView.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7431C5E621FEDEA5001F16B7 /* HDPeriodCircleView.framework */; };
+		74111FD721FEEA2B00FB1A6C /* HDPeriodCircleView.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 7431C5E621FEDEA5001F16B7 /* HDPeriodCircleView.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		7431C5D021FEDE8A001F16B7 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7431C5CF21FEDE8A001F16B7 /* AppDelegate.swift */; };
 		7431C5D221FEDE8A001F16B7 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7431C5D121FEDE8A001F16B7 /* ViewController.swift */; };
 		7431C5D521FEDE8A001F16B7 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 7431C5D321FEDE8A001F16B7 /* Main.storyboard */; };
@@ -15,6 +17,20 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		74111FD321FEE9FB00FB1A6C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 7431C5E121FEDEA5001F16B7 /* HDPeriodCircleView.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 7431C5B721FEDE53001F16B7;
+			remoteInfo = HDPeriodCircleView;
+		};
+		74111FD821FEEA2B00FB1A6C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 7431C5E121FEDEA5001F16B7 /* HDPeriodCircleView.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 7431C5B721FEDE53001F16B7;
+			remoteInfo = HDPeriodCircleView;
+		};
 		7431C5E521FEDEA5001F16B7 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 7431C5E121FEDEA5001F16B7 /* HDPeriodCircleView.xcodeproj */;
@@ -23,6 +39,20 @@
 			remoteInfo = HDPeriodCircleView;
 		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		74111FDA21FEEA2B00FB1A6C /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				74111FD721FEEA2B00FB1A6C /* HDPeriodCircleView.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		7431C5CC21FEDE8A001F16B7 /* HDPeriodCircleExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HDPeriodCircleExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -40,6 +70,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				74111FD621FEEA2B00FB1A6C /* HDPeriodCircleView.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -94,10 +125,13 @@
 				7431C5C821FEDE8A001F16B7 /* Sources */,
 				7431C5C921FEDE8A001F16B7 /* Frameworks */,
 				7431C5CA21FEDE8A001F16B7 /* Resources */,
+				74111FDA21FEEA2B00FB1A6C /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				74111FD421FEE9FB00FB1A6C /* PBXTargetDependency */,
+				74111FD921FEEA2B00FB1A6C /* PBXTargetDependency */,
 			);
 			name = HDPeriodCircleExample;
 			productName = HDPeriodCircleExample;
@@ -177,6 +211,19 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		74111FD421FEE9FB00FB1A6C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = HDPeriodCircleView;
+			targetProxy = 74111FD321FEE9FB00FB1A6C /* PBXContainerItemProxy */;
+		};
+		74111FD921FEEA2B00FB1A6C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = HDPeriodCircleView;
+			targetProxy = 74111FD821FEEA2B00FB1A6C /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
 		7431C5D321FEDE8A001F16B7 /* Main.storyboard */ = {
@@ -317,8 +364,10 @@
 		7431C5DF21FEDE8A001F16B7 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_STYLE = Manual;
+				DEVELOPMENT_TEAM = QSD39HF695;
 				INFOPLIST_FILE = HDPeriodCircleExample/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -326,6 +375,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = GRU.HDPeriodCircleExample;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = MyAcc_WildCard_Dev;
 				SWIFT_VERSION = 4.2;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -334,8 +384,10 @@
 		7431C5E021FEDE8A001F16B7 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_STYLE = Manual;
+				DEVELOPMENT_TEAM = "";
 				INFOPLIST_FILE = HDPeriodCircleExample/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -343,6 +395,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = GRU.HDPeriodCircleExample;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_VERSION = 4.2;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};

@@ -7,8 +7,11 @@
 //
 
 import UIKit
+import HDPeriodCircleView
 
 class ViewController: UIViewController {
+    
+    @IBOutlet var periodCircleView: HDPeriodCircleView!
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -24,10 +27,15 @@ class ViewController: UIViewController {
             UIColor(red: 255.0/255.0, green: 105.0/255.0, blue: 150.0/255.0, alpha: 1.0).cgColor,
             UIColor(red: 255.0/255.0, green: 204.0/255.0, blue: 136.0/255.0, alpha: 1.0).cgColor
         ]
-        
-        
     }
-
-
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        /// Configure period view
+        
+        
+        /// Redraw
+        self.periodCircleView.reDrawCycleView()
+    }
 }
 
