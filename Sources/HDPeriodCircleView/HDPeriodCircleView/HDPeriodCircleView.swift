@@ -349,28 +349,30 @@ open class HDPeriodCircleView: UIView {
     //  MARK: - LOCALIZE HELPER
     /// ----------------------------------------------------------------------------------
     public var locale = Locale.current
-    fileprivate func _textWeakdayForDateComponentAt(index: Int) -> String {
-        let firstDate = self._firstLogicDateOnCycle
-        let date = firstDate.addingTimeInterval(TimeInterval(index)*86400.0)
+    public var calendar = Calendar(identifier: .gregorian)
+    
+    private lazy var _dateFormatter: DateFormatter = {
         let dateFormatter = DateFormatter()
         dateFormatter.locale = self.locale
         dateFormatter.dateFormat = "E"
-        let weakday = dateFormatter.string(from: date).uppercased()
+        return dateFormatter
+    }()
+    
+    fileprivate func _textWeakdayForDateComponentAt(index: Int) -> String {
+        let firstDate = self._firstLogicDateOnCycle
+        let date = firstDate.addingTimeInterval(TimeInterval(index)*86400.0)
+        let weakday = self._dateFormatter.string(from: date).uppercased()
         return weakday
     }
     fileprivate func _textDayForDateComponentAt(index: Int) -> String {
-        
         let firstDate = self._firstLogicDateOnCycle
-        
         let date = firstDate.addingTimeInterval(TimeInterval(index)*86400.0)
-        let calendar = Calendar(identifier: .gregorian)
-        let dateComponent = calendar.dateComponents([.day], from: date)
         
+        let dateComponent = self.calendar.dateComponents([.day], from: date)
         var output = ""
         if let _day = dateComponent.day {
             output += "\(_day)"
         }
-        
         return output
     }
     
