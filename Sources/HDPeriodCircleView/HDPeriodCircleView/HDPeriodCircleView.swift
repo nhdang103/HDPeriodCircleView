@@ -14,15 +14,16 @@ import UIKit
  Ovulation. This phase occurs roughly at about day 14 in a 28-day menstrual cycle. A sudden increase in another hormone—luteinizing hormone—causes the ovary to release its egg. This event is called ovulation.
  The luteal phase. This phase lasts from about day 15 to day 28. After the egg is released from the ovary it begins to travel through the fallopian tubes to the uterus. The level of the hormone progesterone rises to help prepare the uterine lining for pregnancy. If the egg becomes fertilized by a sperm and attaches itself to the uterine wall, the woman becomes pregnant. If pregnancy does not occur, estrogen and progesterone levels drop and the thickened lining of the uterus is shed during the menstrual period.
  
+ * Action
+ - Auto focus today
+ - Tapping to highlight, callback
+ - Tapping jump to TODAY
+ 
  * Date component:
  - 4 pharse
- - Tap to highlight
- -
  
  - Background circle
  - Shadow: Flatting and gradiant
-
- 
  
  */
 
@@ -347,10 +348,12 @@ open class HDPeriodCircleView: UIView {
     
     //  MARK: - LOCALIZE HELPER
     /// ----------------------------------------------------------------------------------
+    public var locale = Locale.current
     fileprivate func _textWeakdayForDateComponentAt(index: Int) -> String {
         let firstDate = self._firstLogicDateOnCycle
         let date = firstDate.addingTimeInterval(TimeInterval(index)*86400.0)
         let dateFormatter = DateFormatter()
+        dateFormatter.locale = self.locale
         dateFormatter.dateFormat = "E"
         let weakday = dateFormatter.string(from: date).uppercased()
         return weakday

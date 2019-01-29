@@ -35,6 +35,7 @@ class ViewController: UIViewController {
         
         
         /// Redraw
+        self.periodCircleView.locale = Locale(identifier: "vi")
         self.periodCircleView.reDrawCycleView()
     }
 }
