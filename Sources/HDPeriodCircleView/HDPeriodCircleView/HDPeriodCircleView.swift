@@ -14,6 +14,16 @@ import UIKit
  Ovulation. This phase occurs roughly at about day 14 in a 28-day menstrual cycle. A sudden increase in another hormone—luteinizing hormone—causes the ovary to release its egg. This event is called ovulation.
  The luteal phase. This phase lasts from about day 15 to day 28. After the egg is released from the ovary it begins to travel through the fallopian tubes to the uterus. The level of the hormone progesterone rises to help prepare the uterine lining for pregnancy. If the egg becomes fertilized by a sperm and attaches itself to the uterine wall, the woman becomes pregnant. If pregnancy does not occur, estrogen and progesterone levels drop and the thickened lining of the uterus is shed during the menstrual period.
  
+ * Date component:
+ - 4 pharse
+ - Tap to highlight
+ -
+ 
+ - Background circle
+ - Shadow: Flatting and gradiant
+
+ 
+ 
  */
 
 fileprivate func _degreeToRadian(degree: CGFloat) -> CGFloat {
@@ -58,6 +68,7 @@ open class HDPeriodCircleView: UIView {
     
     public var appearance: HDPeriodCircleViewAppearance = HDPeriodCircleViewAppearance.standard
     
+    ///
     private(set) var firstDayOfLastPeriod: Date = {
         var curDate = Date()
         return curDate.addingTimeInterval(86400 * (-12))
@@ -66,31 +77,34 @@ open class HDPeriodCircleView: UIView {
         return self.firstDayOfLastPeriod
     }
     
-    private(set) var menstrualCycleDay: Int = 28
-    private(set) var periodLastingDay: Int = 4
+    var menstrualCycleDay: Int = 31 {
+        willSet {
+            /// Range of menstrual cycle lenght is 21-45
+            var _newValue = newValue
+            _newValue = max(21, _newValue)
+            _newValue = min(45, _newValue)
+            self.menstrualCycleDay = _newValue
+        }
+    }
+    var periodLastingDay: Int = 4 {
+        willSet {
+            /// Range of period lasting is 2-7
+            var _newValue = newValue
+            _newValue = max(2, _newValue)
+            _newValue = min(7, _newValue)
+            self.periodLastingDay = _newValue
+        }
+    }
+    
+    /// Left and Right range of ovulation day
+    var ovulationPhraseLeftRange: Int = 2
+    var ovulationPhraseRightRange: Int = 2
     
     enum DateIndexType {
         case menses
         case follicular
         case ovulation
         case luteal
-    }
-    
-    //  MARK: - ACCESSORY
-    /// ----------------------------------------------------------------------------------
-    func setMenstrualCycleDay(value: Int) {
-        /// Range of menstrual cycle lenght is 21-45
-        var newValue = value
-        newValue = max(21, newValue)
-        newValue = min(45, newValue)
-        self.menstrualCycleDay = newValue
-    }
-    func setPeriodLastingday(value: Int) {
-        /// Range of period lasting is 2-7
-        var newValue = value
-        newValue = max(2, newValue)
-        newValue = min(7, newValue)
-        self.periodLastingDay = newValue
     }
     
     //  MARK: - DRAWING THE CIRCLE
@@ -109,6 +123,11 @@ open class HDPeriodCircleView: UIView {
     ///  MARK: - DRAWING DATE COMPONENTS
     /// ----------------------------------------------------------------------------------
     fileprivate func _drawDateComponents() {
+        
+        /// Center position
+        _preCalculateDateComponentCenterPoints()
+        
+        /// Drawing
         for index in 0..<self.menstrualCycleDay {
             _drawDateComponentAtIndex(index: index)
         }
@@ -136,7 +155,7 @@ open class HDPeriodCircleView: UIView {
 //
 //        textLayer.bounds = CGRect(origin: CGPoint.zero, size: CGSize(width: 60.0, height: 60.0))
 //        textLayer.anchorPoint = CGPoint(x: 0.5, y: 0.5)
-//        textLayer.position = _centerForDateComponentAt(index: index, dateType: dateType)
+//        textLayer.position = _dateComponentCenters[index]
 //        self.layer.addSublayer(textLayer)
         
         let attributedString = NSMutableAttributedString()
@@ -159,14 +178,14 @@ open class HDPeriodCircleView: UIView {
         label.textColor = _dateComponentColorWith(type: dateType)
         label.textAlignment = .center
         label.numberOfLines = 2
-        label.center = _centerForDateComponentAt(index: index, dateType: dateType)
+        label.center = _dateComponentCenters[index]
         label.attributedText = attributedString
         self.addSubview(label)
     }
     fileprivate func _drawDateComponentDotAt(index: Int, dateType: DateIndexType) {
         
         let circlePath = UIBezierPath(
-            arcCenter: _centerForDateComponentAt(index: index, dateType: dateType),
+            arcCenter: _dateComponentCenters[index],
             radius: 3.0,
             startAngle: 0.0,
             endAngle: CGFloat.pi*2.0,
@@ -232,93 +251,102 @@ open class HDPeriodCircleView: UIView {
     /// ----------------------------------------------------------------------------------
     fileprivate func _drawCircleDirectionIndicator() {
         
-//        let _appearance = self.appearance
-//
-//        let circlePath = UIBezierPath(arcCenter: _appearance.circleCenterPoint, radius: _appearance.circleRadius, startAngle: -(CGFloat.pi/2.0), endAngle: -(CGFloat.pi/2.0) * (1 - 12.0/90.0), clockwise: true)
-//        circlePath.lineCapStyle = .round
-//        circlePath.lineJoinStyle = .round
-//        circlePath.stroke()
-//
-//        let circleShape = CAShapeLayer()
-//        circleShape.path = circlePath.cgPath
-//        circleShape.fillColor = UIColor.clear.cgColor
-//        circleShape.strokeColor = UIColor(white: 0.9, alpha: 1.0).cgColor
-//        circleShape.lineWidth = _appearance.circleLineWidth
-//        self.layer.addSublayer(circleShape)
-//
-//        let circlePath_2 = UIBezierPath(arcCenter: _appearance.circleCenterPoint, radius: _appearance.circleRadius, startAngle: -(CGFloat.pi/2.0), endAngle: -(CGFloat.pi/2.0)*(1 - 9.0/90.0), clockwise: true)
-//        circlePath_2.lineCapStyle = .round
-//        circlePath_2.lineJoinStyle = .round
-//        circlePath_2.stroke()
-//
-//        let circleShape_2 = CAShapeLayer()
-//        circleShape_2.path = circlePath_2.cgPath
-//        circleShape_2.fillColor = UIColor.clear.cgColor
-//        circleShape_2.strokeColor = _appearance.circleBackgroundColor.cgColor
-//        circleShape_2.lineWidth = _appearance.circleLineWidth
-//        self.layer.addSublayer(circleShape_2)
     }
     
-    //  MARK: - HELPER
+    //  MARK: - DATE COMPONENT HELPER
     /// ----------------------------------------------------------------------------------
     fileprivate func _dateComponentTypeAt(index: Int) -> DateIndexType {
         
-        let ovulationDayIndex = self.menstrualCycleDay-15
+        guard index >= 0, index < self.menstrualCycleDay else {
+            assertionFailure("Wrong index range")
+            return .follicular
+        }
         
-//        if 0 <= index, index < self.periodLastingDay {
-//            return .menses
-//        }
-//        else if self.periodLastingDay <= index, index < (ovulationDayIndex-2) {
-//            return .follicular
-//        }
-//        else if (ovulationDayIndex-2) <= index, index < (ovulationDayIndex+2) {
-//            return .ovulation
-//        }
-//        else if (ovulationDayIndex+3) <= index {
-//            return .luteal
-//        }
-//        else {
-//            return .follicular
-//        }
+        let ovulationDayIndex = self.menstrualCycleDay-15
+        let maxRightOvulationDayIndex = ovulationDayIndex-self.ovulationPhraseRightRange
+        let maxLeftOvulationDayIndex = ovulationDayIndex+self.ovulationPhraseLeftRange
         
         switch index {
-        case 0..<self.periodLastingDay:                         return .menses
-        case self.periodLastingDay..<(ovulationDayIndex-2):     return .follicular
-        case (ovulationDayIndex-2)...(ovulationDayIndex+2):     return .ovulation
-        case (ovulationDayIndex+3)...:                          return .luteal
-        default:                                                return .follicular
+        case 0..<self.periodLastingDay:                             return .menses
+        case self.periodLastingDay..<maxRightOvulationDayIndex:     return .follicular
+        case maxRightOvulationDayIndex...maxLeftOvulationDayIndex:  return .ovulation
+        case (maxLeftOvulationDayIndex+1)...:                       return .luteal
+        default:
+            assertionFailure("Wrong logic, this case never execute")
+            return .follicular
         }
-    }
-    fileprivate func _dateComponentColorWith(type: DateIndexType) -> UIColor {
-        let _appearance = self.appearance
-        switch type {
-        case .menses:       return _appearance.mensesDateColor
-        case .follicular:   return _appearance.follicularDateColor
-        case .ovulation:    return _appearance.ovulationDateColor
-        case .luteal:       return _appearance.lutealDateColor
-        }
-    }
-    fileprivate func _centerForDateComponentAt(index: Int, dateType: DateIndexType) -> CGPoint {
-        
-        let _appearance = self.appearance
-        
-        var _baseRadius = _appearance.circleRadius
-        switch dateType {
-        case .menses:       break
-        case .follicular:   break
-        case .ovulation:    _baseRadius += 2.0
-        case .luteal:       break
-        }
-        
-        let stepAngleDegree = (_appearance._datePositionEndAngleDegree - _appearance._datePositionStartAngleDegree)/CGFloat(self.menstrualCycleDay - 1)
-        let angleDegree = _appearance._datePositionStartAngleDegree + CGFloat(index)*stepAngleDegree
-        let center = CGPoint(
-            x: _appearance.circleCenterPoint.x + cos(_degreeToRadian(degree: angleDegree))*_baseRadius,
-            y: _appearance.circleCenterPoint.y + sin(_degreeToRadian(degree: angleDegree))*_baseRadius)
-        
-        return center
     }
     
+    fileprivate var _dateComponentCenters: [CGPoint] = []
+    fileprivate func _preCalculateDateComponentCenterPoints() {
+        
+        /// Remove all
+        _dateComponentCenters.removeAll()
+        
+        /// Ovulation phrase
+        let ovulationDayIndex = self.menstrualCycleDay-15
+        let maxLeftOvulationDayIndex = ovulationDayIndex+self.ovulationPhraseLeftRange
+        
+        /// Base radius
+        let _appearance = self.appearance
+        let _baseRadius = _appearance.circleRadius
+        
+        /// Base step degree
+        let totalDegree = _appearance._datePositionEndAngleDegree - _appearance._datePositionStartAngleDegree
+        let baseStepDegree = totalDegree/CGFloat(self.menstrualCycleDay - 1)
+        
+        /// Dately step degree
+        let datelyDegree = baseStepDegree * 1.3
+        
+        /// Dotly step degree
+        let numOfDatelyStep = self.periodLastingDay + self.ovulationPhraseLeftRange + self.ovulationPhraseRightRange + 1
+        let totalDatelyStepDegree = datelyDegree * CGFloat(numOfDatelyStep)
+        let dotlyDegree = (totalDegree-totalDatelyStepDegree)/CGFloat(self.menstrualCycleDay - 1 - numOfDatelyStep)
+        
+        /// Calculate center points
+        var curAngleOffset = _appearance._datePositionStartAngleDegree
+        for index in 0..<self.menstrualCycleDay {
+            
+            var radius = _baseRadius
+            
+            let dateType = _dateComponentTypeAt(index: index)
+            switch dateType {
+            case .menses:
+                if index > 0 {
+                    curAngleOffset += datelyDegree
+                }
+                
+            case .follicular:
+                if index == self.periodLastingDay {
+                    curAngleOffset += datelyDegree
+                }
+                else {
+                    curAngleOffset += dotlyDegree
+                }
+                
+            case .ovulation:
+                curAngleOffset += datelyDegree
+//                radius += 2
+            
+            case .luteal:
+                if index == (maxLeftOvulationDayIndex+1) {
+                    curAngleOffset += datelyDegree
+                }
+                else {
+                    curAngleOffset += dotlyDegree
+                }
+            }
+            
+            let center = CGPoint(
+                x: _appearance.circleCenterPoint.x + cos(_degreeToRadian(degree: curAngleOffset))*radius,
+                y: _appearance.circleCenterPoint.y + sin(_degreeToRadian(degree: curAngleOffset))*radius)
+            
+            _dateComponentCenters.append(center)
+        }
+    }
+    
+    //  MARK: - LOCALIZE HELPER
+    /// ----------------------------------------------------------------------------------
     fileprivate func _textWeakdayForDateComponentAt(index: Int) -> String {
         let firstDate = self._firstLogicDateOnCycle
         let date = firstDate.addingTimeInterval(TimeInterval(index)*86400.0)
@@ -341,5 +369,17 @@ open class HDPeriodCircleView: UIView {
         }
         
         return output
+    }
+    
+    //  MARK: - APPEARANCE HELPER
+    /// ----------------------------------------------------------------------------------
+    fileprivate func _dateComponentColorWith(type: DateIndexType) -> UIColor {
+        let _appearance = self.appearance
+        switch type {
+        case .menses:       return _appearance.mensesDateColor
+        case .follicular:   return _appearance.follicularDateColor
+        case .ovulation:    return _appearance.ovulationDateColor
+        case .luteal:       return _appearance.lutealDateColor
+        }
     }
 }
