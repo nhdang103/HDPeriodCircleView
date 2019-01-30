@@ -32,10 +32,12 @@ class ViewController: UIViewController {
         super.viewWillAppear(animated)
         
         /// Configure period view
-        
+//        self.periodCircleView.locale = Locale(identifier: "vi")
+        self.periodCircleView.firstDayOfLastPeriod = Date().addingTimeInterval(-7.0 * 86400.0)
+        self.periodCircleView.mensesDayNum = 4
+        self.periodCircleView.menstrualCycleDay = 28
         
         /// Redraw
-        self.periodCircleView.locale = Locale(identifier: "vi")
         self.periodCircleView.reDrawCycleView()
     }
 }

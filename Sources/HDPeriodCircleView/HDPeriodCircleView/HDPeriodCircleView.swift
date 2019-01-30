@@ -76,9 +76,11 @@ open class HDPeriodCircleViewAppearance: NSObject {
 /// ----------------------------------------------------------------------------------
 protocol HDPeriodCircleDelegate: NSObjectProtocol {
     func periodCircleView(view: HDPeriodCircleView, didHitDateIndex index: Int, date: Date)
-    func periodCircleView(view: HDPeriodCircleView, attributedStringForDateComponentAt index: Int, isHighlight: Bool) -> NSAttributedString?
+    func periodCircleViewdidHitCenterButton(view: HDPeriodCircleView)
+    
+    func periodCircleView(view: HDPeriodCircleView, attrStringForNodeAt index: Int, date: Date, isHighlight: Bool) -> NSAttributedString?
+    func periodCircleView(view: HDPeriodCircleView, attrStringForCenterAt index: Int, date: Date) -> NSAttributedString?
 }
-
 
 /// ----------------------------------------------------------------------------------
 //  MARK: - NODE-Able
@@ -103,40 +105,49 @@ extension UILabel: HDPeriodCircleNodeAbleProtocol {
 open class HDPeriodCircleView: UIView {
     
     weak var delegate: HDPeriodCircleDelegate?
-    
     public var appearance: HDPeriodCircleViewAppearance = HDPeriodCircleViewAppearance.standard
     
-    ///
-    private(set) var firstDayOfLastPeriod: Date = {
-        var curDate = Date()
-        return curDate.addingTimeInterval(86400 * (-12))
-    }()
-    fileprivate var _firstLogicDateOnCycle: Date {
-        return self.firstDayOfLastPeriod
-    }
-    
-    var menstrualCycleDay: Int = 35 {
-        willSet {
+    /// Period Basically inforamtion
+    public var firstDayOfLastPeriod: Date = Date()
+    public var menstrualCycleDay: Int = 28 {
+        didSet {
             /// Range of menstrual cycle lenght is 21-45
-            var _newValue = newValue
+            var _newValue = self.menstrualCycleDay
             _newValue = max(21, _newValue)
             _newValue = min(45, _newValue)
             self.menstrualCycleDay = _newValue
         }
     }
-    var periodLastingDay: Int = 4 {
-        willSet {
+    public var mensesDayNum: Int = 4 {
+        didSet {
             /// Range of period lasting is 2-7
-            var _newValue = newValue
+            var _newValue = self.mensesDayNum
             _newValue = max(2, _newValue)
             _newValue = min(7, _newValue)
-            self.periodLastingDay = _newValue
+            self.mensesDayNum = _newValue
+        }
+    }
+    public var ovulationPhraseLeftRange: Int = 2 {
+        didSet {
+            /// Range 2-3
+            var _newValue = self.ovulationPhraseLeftRange
+            _newValue = max(2, _newValue)
+            _newValue = min(3, _newValue)
+            self.ovulationPhraseLeftRange = _newValue
+        }
+    }
+    public var ovulationPhraseRightRange: Int = 2 {
+        didSet {
+            /// Range 2-4
+            var _newValue = self.ovulationPhraseRightRange
+            _newValue = max(2, _newValue)
+            _newValue = min(4, _newValue)
+            self.ovulationPhraseRightRange = _newValue
         }
     }
     
-    /// Left and Right range of ovulation day
-    var ovulationPhraseLeftRange: Int = 2
-    var ovulationPhraseRightRange: Int = 2
+    fileprivate var _firstDayOfCurrentPeriod: Date = Date()
+    fileprivate var _todayIndex: Int?
     
     enum NodeType {
         case menses
@@ -147,6 +158,9 @@ open class HDPeriodCircleView: UIView {
     
     /// Gesture
     private(set) var tapGesture: UITapGestureRecognizer?
+    
+    /// Center view
+    private var labelCenter: UILabel?
     
     //  MARK: - VIEW CYCLE
     /// ----------------------------------------------------------------------------------
@@ -170,13 +184,24 @@ open class HDPeriodCircleView: UIView {
     /// ----------------------------------------------------------------------------------
     public func reDrawCycleView() {
         
+        /// Pre-Calc date
+        let _calcResult = _calcCurrentPeriodCycleStartDate(firstDayOfLastCycle: self.firstDayOfLastPeriod, cycleLenght: self.menstrualCycleDay)
+        self._firstDayOfCurrentPeriod = _calcResult.0
+        self._todayIndex = _calcResult.1
+        
         /// Circle
         _drawBackgroundCicleShadow()
         _drawBackgroundCircleView()
         _drawCircleDirectionIndicator()
+        _drawCenterView()
         
         /// Date components
         _drawPeriodCircleNodes()
+        
+        /// Jump to today
+        if let _todayIndex = self._todayIndex {
+            _drawCurrentHighlightNodeAt(index: _todayIndex)
+        }
     }
     
     ///  MARK: - DRAWING DATE COMPONENTS
@@ -208,22 +233,13 @@ open class HDPeriodCircleView: UIView {
         }
     }
     fileprivate func _drawNodeTypeDateAt(index: Int, dateType: NodeType) -> HDPeriodCircleNodeAbleProtocol {
-        
-        var attributedString: NSAttributedString?
-        if let _value = self.delegate?.periodCircleView(view: self, attributedStringForDateComponentAt: index, isHighlight: false) {
-            attributedString = _value
-        }
-        else {
-            attributedString = _attrStringForNodeAt(index: index, isHighlight: false)
-        }
-        
         let label = UILabel(frame: CGRect(origin: CGPoint.zero, size: CGSize(width: 60.0, height: 60.0)))
         label.font = UIFont.systemFont(ofSize: 12.0)
         label.textColor = _nodeColorWith(type: dateType)
         label.textAlignment = .center
         label.numberOfLines = 0
         label.center = _nodePositionCenterPointAt(index: index)
-        label.attributedText = attributedString
+        label.attributedText = _attrStringForNodeAt(index: index, isHighlight: false)
         self.addSubview(label)
         
         return label
@@ -301,6 +317,30 @@ open class HDPeriodCircleView: UIView {
         
     }
     
+    //  MARK: - CENTER VIEW
+    /// ----------------------------------------------------------------------------------
+    fileprivate func _drawCenterView() {
+        
+        let _appearance = self.appearance
+        
+        /// Label
+        let maxRadius = (_appearance.circleRadius*2.0 - _appearance.circleLineWidth)/2.0
+        let size = maxRadius/cos(_degreeToRadian(degree: 45))
+        let frame = CGRect(origin: CGPoint.zero, size: CGSize(width: size, height: size))
+        let newLabel = UILabel(frame: frame)
+        newLabel.textAlignment = .center
+        newLabel.center = _appearance.circleCenterPoint
+        newLabel.numberOfLines = 0
+        self.addSubview(newLabel)
+        self.labelCenter = newLabel
+        
+        /// Button
+        let button = UIButton(frame: frame)
+        button.addTarget(self, action: #selector(_handleTappingOnCenterArea), for: .touchUpInside)
+        button.center = _appearance.circleCenterPoint
+        self.addSubview(button)
+    }
+    
     //  MARK: - DRAW HIGHLIGHT DATE COMPONENT
     /// ----------------------------------------------------------------------------------
     private var _curHighlightedNode: HDPeriodCircleNodeAbleProtocol?
@@ -340,14 +380,6 @@ open class HDPeriodCircleView: UIView {
         var centerPoint = _nodePositionCenterPointAt(index: index)
         centerPoint.y -= (_appearance.highlightViewCircleRadius + 3.0)
         
-        var attributedString: NSAttributedString?
-        if let _value = self.delegate?.periodCircleView(view: self, attributedStringForDateComponentAt: index, isHighlight: false) {
-            attributedString = _value
-        }
-        else {
-            attributedString = _attrStringForNodeAt(index: index, isHighlight: true)
-        }
-        
         let newLabel = UILabel(frame: CGRect(origin: CGPoint.zero, size: CGSize(width: _appearance.highlightViewCircleRadius*2.0, height: _appearance.highlightViewCircleRadius*2.0)))
         newLabel.layer.cornerRadius = _appearance.highlightViewCircleRadius
         newLabel.clipsToBounds = true
@@ -356,9 +388,26 @@ open class HDPeriodCircleView: UIView {
         newLabel.textAlignment = .center
         newLabel.center = centerPoint
         newLabel.numberOfLines = 0
-        newLabel.attributedText = attributedString
+        newLabel.attributedText = _attrStringForNodeAt(index: index, isHighlight: true)
         self.addSubview(newLabel)
         _curHighlightView = newLabel
+        
+        /// Center view
+        self.labelCenter?.attributedText = _attrStringForCenterAt(selectedIndex: index)
+    }
+    
+    //  MARK: - ACTIONS
+    /// ----------------------------------------------------------------------------------
+    fileprivate func _handleTappingNodeAt(index: Int) {
+        
+        /// Update UI
+        _drawCurrentHighlightNodeAt(index: index)
+        
+        /// Callback
+        self.delegate?.periodCircleView(view: self, didHitDateIndex: index, date: Date())
+    }
+    @objc fileprivate func _handleTappingOnCenterArea() {
+        self.delegate?.periodCircleViewdidHitCenterButton(view: self)
     }
     
     //  MARK: - TAP GESTURE
@@ -366,23 +415,16 @@ open class HDPeriodCircleView: UIView {
     @objc fileprivate func _handleTapGesture(gesture: UITapGestureRecognizer) {
         switch gesture.state {
         case .ended:
-            self._handleTappingAt(point: gesture.location(in: self))
+            let location = gesture.location(in: self)
+            guard let _nodeIndex = _tappedNodeIndexAt(point: location) else {
+                return
+            }
+            self._handleTappingNodeAt(index: _nodeIndex)
+            
         default:
             break
         }
     }
-    fileprivate func _handleTappingAt(point: CGPoint) {
-        guard let _nodeIndex = _tappedNodeIndexAt(point: point) else {
-            return
-        }
-        
-        /// Update UI
-        _drawCurrentHighlightNodeAt(index: _nodeIndex)
-        
-        /// Callback
-        self.delegate?.periodCircleView(view: self, didHitDateIndex: _nodeIndex, date: Date())
-    }
-    
     fileprivate func _tappedNodeIndexAt(point: CGPoint) -> Int? {
         
         let _appearance = self.appearance
@@ -420,6 +462,31 @@ open class HDPeriodCircleView: UIView {
         return curIndex
     }
     
+    //  MARK: - DATE HELPER
+    /// ----------------------------------------------------------------------------------
+    private func _calcCurrentPeriodCycleStartDate(firstDayOfLastCycle: Date, cycleLenght: Int) -> (Date, Int?) {
+        
+        let currentDate = Date()
+        guard currentDate.timeIntervalSince(firstDayOfLastCycle) > 0.0 else {
+            return (firstDayOfLastCycle, nil)
+        }
+        
+        let calendar = self.calendar
+        let dateComponent = calendar.dateComponents([.day], from: firstDayOfLastCycle, to: currentDate)
+        guard let _day = dateComponent.day else {
+            return (firstDayOfLastCycle, nil)
+        }
+        
+        let todayIndex = _day%cycleLenght
+        let output = currentDate.addingTimeInterval(86400.0 * TimeInterval(-todayIndex))
+        
+        return (output, todayIndex)
+    }
+    private func _dateAtIndex(index: Int) -> Date {
+        let firstDate = self._firstDayOfCurrentPeriod
+        return firstDate.addingTimeInterval(TimeInterval(index)*86400.0)
+    }
+    
     //  MARK: - NODE POSITION HELPER
     /// ----------------------------------------------------------------------------------
     fileprivate func _nodeTypeAt(index: Int) -> NodeType {
@@ -434,8 +501,8 @@ open class HDPeriodCircleView: UIView {
         let maxLeftOvulationDayIndex = ovulationDayIndex+self.ovulationPhraseLeftRange
         
         switch index {
-        case 0..<self.periodLastingDay:                             return .menses
-        case self.periodLastingDay..<maxRightOvulationDayIndex:     return .follicular
+        case 0..<self.mensesDayNum:                             return .menses
+        case self.mensesDayNum..<maxRightOvulationDayIndex:     return .follicular
         case maxRightOvulationDayIndex...maxLeftOvulationDayIndex:  return .ovulation
         case (maxLeftOvulationDayIndex+1)...:                       return .luteal
         default:
@@ -473,7 +540,7 @@ open class HDPeriodCircleView: UIView {
         let datelyDegree = baseStepDegree * 1.3
         
         /// Dotly step degree
-        let numOfDatelyStep = self.periodLastingDay + self.ovulationPhraseLeftRange + self.ovulationPhraseRightRange + 1
+        let numOfDatelyStep = self.mensesDayNum + self.ovulationPhraseLeftRange + self.ovulationPhraseRightRange + 1
         let totalDatelyStepDegree = datelyDegree * CGFloat(numOfDatelyStep)
         let dotlyDegree = (totalDegree-totalDatelyStepDegree)/CGFloat(self.menstrualCycleDay - 1 - numOfDatelyStep)
         
@@ -491,7 +558,7 @@ open class HDPeriodCircleView: UIView {
                 }
                 
             case .follicular:
-                if index == self.periodLastingDay {
+                if index == self.mensesDayNum {
                     curAngleOffset += datelyDegree
                 }
                 else {
@@ -524,39 +591,82 @@ open class HDPeriodCircleView: UIView {
     public var locale = Locale.current
     public var calendar = Calendar(identifier: .gregorian)
     
-    private lazy var _dateFormatter: DateFormatter = {
+    private lazy var _weekdayDateFormatter: DateFormatter = {
         let dateFormatter = DateFormatter()
         dateFormatter.locale = self.locale
         dateFormatter.dateFormat = "E"
         return dateFormatter
     }()
+    private lazy var _dayStyleShortDateFormatter: DateFormatter = {
+        let dateFormatter = DateFormatter()
+        dateFormatter.locale = self.locale
+        dateFormatter.dateFormat = "MMM dd"
+        return dateFormatter
+    }()
     
     private func _attrStringForNodeAt(index: Int, isHighlight: Bool) -> NSAttributedString {
-        let attributedString = NSMutableAttributedString()
-        let _weeday = _stringWeakdayForNodeAt(index: index)
-        if _weeday.count > 0 {
-            attributedString.append(NSAttributedString(
-                string: "\(_weeday)\n",
-                attributes: [.font : UIFont.systemFont(ofSize: 9.0, weight: .regular)]))
+        let _calendarDate = _dateAtIndex(index: index)
+        if let _value = self.delegate?.periodCircleView(view: self, attrStringForNodeAt: index, date: _calendarDate, isHighlight: isHighlight) {
+            return _value
         }
-        let _day = _stringDayForNodeAt(index: index)
-        if _day.count > 0 {
-            attributedString.append(NSAttributedString(
-                string: _day,
-                attributes: [.font : UIFont.systemFont(ofSize: 15.0, weight: isHighlight ? .semibold : .regular)]))
+        else {
+            let attributedString = NSMutableAttributedString()
+            let _weeday = _stringWeekdayForNodeAt(index: index)
+            if _weeday.count > 0 {
+                attributedString.append(NSAttributedString(
+                    string: "\(_weeday.uppercased())\n",
+                    attributes: [.font : UIFont.systemFont(ofSize: 9.0, weight: .regular)]))
+            }
+            let _day = _stringDayForNodeAt(index: index)
+            if _day.count > 0 {
+                attributedString.append(NSAttributedString(
+                    string: _day,
+                    attributes: [.font : UIFont.systemFont(ofSize: 15.0, weight: isHighlight ? .semibold : .regular)]))
+            }
+            return attributedString
         }
-        return attributedString
     }
-    private func _stringWeakdayForNodeAt(index: Int) -> String {
-        let firstDate = self._firstLogicDateOnCycle
-        let date = firstDate.addingTimeInterval(TimeInterval(index)*86400.0)
-        let weakday = self._dateFormatter.string(from: date).uppercased()
+    
+    private func _attrStringForCenterAt(selectedIndex: Int) -> NSAttributedString {
+        let _calendarDate = _dateAtIndex(index: selectedIndex)
+        if let _attrString = self.delegate?.periodCircleView(view: self, attrStringForCenterAt: selectedIndex, date: _calendarDate) {
+            return _attrString
+        }
+        else {
+            let attributedString = NSMutableAttributedString()
+            let _date = _stringDayStyleShortForNodeAt(index: selectedIndex)
+            if _date.count > 0 {
+                attributedString.append(NSAttributedString(
+                    string: "\(_date)\n",
+                    attributes: [
+                        .font : UIFont.systemFont(ofSize: 45.0, weight: .bold),
+                        .foregroundColor : UIColor.white]))
+            }
+            
+            let _weeday = _stringWeekdayForNodeAt(index: selectedIndex)
+            if _weeday.count > 0 {
+                attributedString.append(NSAttributedString(
+                    string: "\(_weeday.uppercased())",
+                    attributes: [
+                        .font : UIFont.systemFont(ofSize: 22.0, weight: .regular),
+                        .foregroundColor : UIColor.white]))
+            }
+            return attributedString
+        }
+    }
+    
+    private func _stringWeekdayForNodeAt(index: Int) -> String {
+        let date = _dateAtIndex(index: index)
+        let weakday = self._weekdayDateFormatter.string(from: date)
+        return weakday
+    }
+    private func _stringDayStyleShortForNodeAt(index: Int) -> String {
+        let date = _dateAtIndex(index: index)
+        let weakday = self._dayStyleShortDateFormatter.string(from: date)
         return weakday
     }
     private func _stringDayForNodeAt(index: Int) -> String {
-        let firstDate = self._firstLogicDateOnCycle
-        let date = firstDate.addingTimeInterval(TimeInterval(index)*86400.0)
-        
+        let date = _dateAtIndex(index: index)
         let dateComponent = self.calendar.dateComponents([.day], from: date)
         var output = ""
         if let _day = dateComponent.day {
